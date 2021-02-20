@@ -12,14 +12,15 @@ class BankServer {
                 println("Server is running on port: ${server.localPort}")
 
                 while (true) {
-                    val sender = server.accept()
+                    val sender = server.accept() //создаём новый сокет клиенту
                     if (sender.isConnected) {
-                        println("Client connected: ${sender.isConnected} -> ${sender.inetAddress.hostAddress}:${sender.localPort}")
-
+                        println("Client connected: ${sender.isConnected} -> " +
+                                "${sender.inetAddress.hostAddress}:${sender.localPort}")
+                        //принимаем сообщение от клиента
                         val message = BufferedReader(sender.getInputStream().reader()).readLine().split(" ")
                         println("Server get message: $message")
 
-                        if (message[0] == "close") {
+                        if (message[0] == "close" && message.size == 1) { //проверяем на запрос закрытия сервера
                             ClientThread(dataBase, message, sender)
                             break
                         } else {
@@ -28,7 +29,7 @@ class BankServer {
                     }
                 }
             }
-            println("Server was closed")
+            println("Server is closed")
         } catch (e: SocketException) {
             println("Error: server was not closed or there was another problem")
             e.printStackTrace()

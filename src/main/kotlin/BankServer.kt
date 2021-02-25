@@ -6,7 +6,7 @@ import java.net.SocketException
 class BankServer {
     fun startServer() {
         try {
-            val dataBase = BankAccount()
+            val dataBase = BankAccounts()
 
             ServerSocket(9999).use { server -> // создаём сервер
                 println("Server is running on port: ${server.localPort}")

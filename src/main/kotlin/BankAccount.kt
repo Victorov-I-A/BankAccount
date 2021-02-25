@@ -5,36 +5,52 @@ import kotlin.Int.Companion.MIN_VALUE
 class BankAccount {
 
     @Synchronized
-    fun doDeposit(deposit: Int): String { //убрать в польз. поток и синхронизировать два метода?
-        val previousNumber = download()
+    fun use(card: String, pin: String, deposit: Int = 0): String {
+        val bankAccounts = download()
+        var useAccount: List<String>? = null
 
-        return when (val updateNumber = previousNumber + deposit) { // проверка результата на больше/меньше
+        for (account in bankAccounts) {
+            if (account[0] == card && account[1] == pin) {
+                useAccount = account
+            }
+        }
+        if (useAccount == null) {
+            upload(bankAccounts)
+            return "Error: wrong card number or PIN"
+        }
+
+        return when (val updateNumber = useAccount[2].toInt() + deposit) { // проверка результата на больше/меньше
             in 100_001..Int.MAX_VALUE -> {
-                upload(previousNumber)
-                "Error: too mach money on account"
+                upload(bankAccounts)
+                "Error: too mach money. On account ${useAccount[2]}"
             }
             in -1 downTo MIN_VALUE -> {
-                upload(previousNumber)
-                "Error: not enough money on account"
+                upload(bankAccounts)
+                "Error: not enough money. On account ${useAccount[2]}"
             }
             else -> {
-                upload(updateNumber)
-                "Success of the operation"
+                bankAccounts.remove(useAccount)
+                bankAccounts.add(listOf(card, pin, updateNumber.toString()))
+                upload(bankAccounts)
+                "Success of the operation. On account $updateNumber"
             }
         }
     }
 
-    private fun download(): Int {
-        return File("dataBase.txt")
-            .bufferedReader().readLine()
-            .replace("_", "")
-            .toInt()
+    private fun download(): MutableList<List<String>> { // выгружаем данные из БД
+        val oldData = mutableListOf<List<String>>()
+        for (line in File("dataBase.txt").bufferedReader().readLines()) {
+            oldData.add(line.split("_"))
+        }
+        return oldData
     }
 
-    private fun upload(number: Int) {
+    private fun upload(newData: MutableList<List<String>>) {
         val bufferedWriter = File("dataBase.txt").bufferedWriter()
-        bufferedWriter.write(number.toString())
+        for (line in newData) {
+            bufferedWriter.write(line[0] + "_" + line[1] + "_" + line[2])
+            bufferedWriter.newLine()
+        }
         bufferedWriter.close()
-        //File("dataBase.txt").bufferedWriter().write(number.toString())
     }
 }
